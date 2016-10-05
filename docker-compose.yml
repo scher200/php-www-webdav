@@ -8,5 +8,5 @@ website:
   environment:
     SHARED_DIR: /htmlfiles
     AUTH_USER: admin
-    AUTH_PASS: admin
+    AUTH_PASS: admintest
 

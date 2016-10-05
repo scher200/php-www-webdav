@@ -52,6 +52,8 @@ if (empty($_SERVER['PHP_AUTH_DIGEST'])) {
 // analyze the PHP_AUTH_DIGEST variable
 if( !($data = http_digest_parse($_SERVER['PHP_AUTH_DIGEST'])) || !isset($users[$data['username']]) ){
     register_bad_login($_SERVER['REMOTE_ADDR']);
+  //header('WWW-Authenticate: Digest realm="'.$realm.'",qop="auth",nonce="'.uniqid().'",opaque="'.md5($realm).'"');
+  header('HTTP/1.0 401 Unauthorized');  
     die('Wrong Credentials! <br />Your IP: '.$_SERVER['REMOTE_ADDR'].'<br />flush your cookies and or browser cache to try again..');
 }
 
@@ -63,6 +65,8 @@ $valid_response = md5($A1.':'.$data['nonce'].':'.$data['nc'].':'.$data['cnonce']
 // Do the check for login
 if( $data['response'] != $valid_response ){
     register_bad_login($_SERVER['REMOTE_ADDR']);
+  //header('WWW-Authenticate: Digest realm="'.$realm.'",qop="auth",nonce="'.uniqid().'",opaque="'.md5($realm).'"');
+  header('HTTP/1.0 401 Unauthorized');
     die('Wrong Credentials! <br />Your IP: '.$_SERVER['REMOTE_ADDR'].'<br />flush your cookies and or browser cache to try again...');
 }
 // Go on freely
@@ -88,13 +92,14 @@ function http_digest_parse($txt)
 function register_bad_login($current_ip){
    // register ip for bad login
     $ips = unserialize(file_get_contents('ip-basic-auth.log'));
+    if( !is_array($ips) ){  $ips = array();  }
     if( array_key_exists($current_ip, $ips) ){
       $ips[$current_ip] = $ips[$current_ip] + 1; // increase it
       if( $ips[$current_ip] >= 5 )
       {
         $blockedips = file_get_contents('blockips.log');
         $fb = fopen('blockips.log', 'w');
-        fwrite($fb, $blockedips."\n".$current_ip);
+        fwrite($fb, $blockedips.$current_ip."\n");
         fclose($fb);
       }
     }else{
